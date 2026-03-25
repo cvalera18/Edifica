@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edifica — Panel de administración</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f0ede8; display: flex; color: #1a1a1a; min-height: 100vh; }
+
+    /* SIDEBAR */
+    .sidebar { width: 220px; min-width: 220px; background: #1e1e1e; display: flex; flex-direction: column; padding: 28px 0; color: #fff; height: 100vh; position: sticky; top: 0; }
+    .sb-brand { display: flex; align-items: center; gap: 10px; padding: 0 22px 24px; border-bottom: 1px solid #2e2e2e; }
+    .sb-logo { width: 34px; height: 34px; background: #e8e0d0; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; color: #1e1e1e; }
+    .sb-brand-name { font-size: 18px; font-weight: 700; color: #fff; }
+    .sb-user { padding: 20px 22px; text-align: center; border-bottom: 1px solid #2e2e2e; }
+    .sb-avatar { width: 56px; height: 56px; border-radius: 50%; background: #3a3a3a; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: #e8e0d0; border: 2px solid #4a4a4a; }
+    .sb-welcome { font-size: 11px; color: #666; }
+    .sb-name { font-size: 14px; font-weight: 600; color: #fff; margin-top: 2px; }
+    .sb-nav { padding: 16px 12px; flex: 1; overflow-y: auto; }
+    .sb-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 500; color: #666; cursor: pointer; transition: all 0.15s; margin-bottom: 2px; user-select: none; }
+    .sb-item:hover { color: #ccc; background: #2a2a2a; }
+    .sb-item.active { background: #2e2e2e; color: #e8c87a; }
+    .sb-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+    .sb-badge { margin-left: auto; background: #e8c87a; color: #1e1e1e; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
+    .sb-badge-red { background: #e07070; color: #fff; }
+    .sb-footer { padding: 16px 22px 0; border-top: 1px solid #2e2e2e; }
+    .sb-footer-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; font-size: 13px; color: #555; cursor: pointer; }
+    .sb-footer-item:hover { color: #aaa; }
+
+    /* MAIN */
+    .main { flex: 1; display: flex; flex-direction: column; min-height: 100vh; overflow: hidden; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 24px 32px 0; flex-shrink: 0; }
+    .topbar-left h1 { font-size: 24px; font-weight: 800; color: #1a1a1a; }
+    .topbar-left p { font-size: 12px; color: #999; margin-top: 3px; }
+    .search { display: flex; align-items: center; gap: 8px; background: #fff; border-radius: 12px; padding: 10px 16px; width: 220px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .search-icon { color: #bbb; font-size: 16px; }
+    .search-text { font-size: 13px; color: #bbb; }
+    .content { flex: 1; padding: 22px 32px 32px; overflow-y: auto; }
+
+    /* VIEWS */
+    .view { display: none; }
+    .view.active { display: block; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* DASHBOARD CARDS */
+    .cards-row { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; margin-bottom: 20px; }
+    .stat-card { border-radius: 20px; padding: 22px; }
+    .card-green { background: #b8d9b0; }
+    .card-yellow { background: #e8d48a; }
+    .card-blue { background: #a8b8e8; }
+    .card-tag { display: inline-flex; align-items: center; background: rgba(255,255,255,0.55); border-radius: 20px; padding: 4px 10px; font-size: 11px; font-weight: 600; color: #333; margin-bottom: 12px; gap: 5px; }
+    .card-badge { background: rgba(0,0,0,0.12); border-radius: 20px; padding: 1px 7px; font-size: 10px; color: #333; font-weight: 700; }
+    .card-number { font-size: 32px; font-weight: 800; color: #1a1a1a; line-height: 1; margin-bottom: 6px; }
+    .card-sub { font-size: 12px; color: rgba(0,0,0,0.5); }
+    .card-cta { font-size: 13px; color: #1a1a1a; font-weight: 600; margin-bottom: 8px; line-height: 1.4; }
+    .card-btn { background: #1e1e1e; color: #fff; border: none; border-radius: 10px; padding: 9px 18px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; margin-top: 8px; transition: opacity 0.15s; }
+    .card-btn:hover { opacity: 0.8; }
+
+    /* BOTTOM GRID */
+    .bottom-area { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr); gap: 16px; }
+    .panel { background: #fff; border-radius: 20px; padding: 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    .panel-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+    .panel-title { font-size: 15px; font-weight: 700; color: #1a1a1a; }
+    .panel-link { font-size: 12px; color: #aaa; cursor: pointer; transition: color 0.15s; }
+    .panel-link:hover { color: #555; }
+
+    /* BAR CHART */
+    .chart-subtitle { font-size: 22px; font-weight: 800; color: #1a1a1a; margin-bottom: 14px; }
+    .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 80px; margin-bottom: 16px; }
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .bar { width: 100%; border-radius: 6px 6px 0 0; transition: opacity 0.15s; }
+    .bar:hover { opacity: 0.7; }
+    .bar-dark { background: #1e1e1e; }
+    .bar-light { background: #e8e4da; }
+    .bar-label { font-size: 10px; color: #bbb; font-weight: 500; }
+
+    /* ACTIVITY */
+    .act-item { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid #f5f5f5; }
+    .act-item:last-child { border-bottom: none; }
+    .act-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-g { background: #7abf8e; } .dot-b { background: #6a9ecf; } .dot-r { background: #e07070; } .dot-y { background: #c9a850; }
+    .act-info { flex: 1; min-width: 0; }
+    .act-title { font-size: 13px; font-weight: 600; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .act-desc { font-size: 11px; color: #aaa; margin-top: 1px; }
+    .act-time { font-size: 11px; color: #ccc; flex-shrink: 0; }
+
+    /* COBRO */
+    .cobro-row { margin-bottom: 14px; }
+    .cobro-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .cobro-label { font-size: 12px; color: #999; }
+    .cobro-val { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+    .track { height: 8px; background: #f0f0f0; border-radius: 8px; overflow: hidden; }
+    .fill { height: 100%; border-radius: 8px; }
+    .fill-green { background: #7abf8e; } .fill-amber { background: #e8b84a; } .fill-red { background: #e07070; }
+    .see-all-btn { width: 100%; margin-top: 16px; padding: 11px; background: #f8f8f6; border: none; border-radius: 10px; font-size: 12px; font-weight: 600; color: #666; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: background 0.15s; }
+    .see-all-btn:hover { background: #efefeb; }
+
+    /* GENERIC PAGE */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .page-h2 { font-size: 16px; font-weight: 700; }
+    .page-btn { background: #1e1e1e; color: #fff; border: none; border-radius: 10px; padding: 9px 18px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: opacity 0.15s; }
+    .page-btn:hover { opacity: 0.8; }
+    .table-wrap { background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #f8f8f6; padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #f0f0f0; }
+    td { padding: 13px 20px; border-bottom: 1px solid #f8f8f6; color: #333; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafaf8; }
+    .pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .pill-green { background: #e6f4ea; color: #2e7d4f; }
+    .pill-red { background: #fdecea; color: #c0392b; }
+    .pill-yellow { background: #fef9e7; color: #a07800; }
+    .pill-blue { background: #e8f0fe; color: #1a56a0; }
+    .pill-gray { background: #f0f0f0; color: #888; }
+
+    /* RESERVAS */
+    .reserve-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+    .reserve-card { background: #fff; border-radius: 16px; padding: 18px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    .rc-space { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .rc-time { font-size: 12px; color: #aaa; }
+    .rc-unit { font-size: 12px; color: #666; margin-top: 6px; }
+
+    /* VISITAS */
+    .visit-live { background: #fff; border-radius: 20px; padding: 20px 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); margin-bottom: 16px; }
+    .vl-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+    .vl-dot { width: 8px; height: 8px; border-radius: 50%; background: #7abf8e; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .vl-title { font-size: 14px; font-weight: 700; }
+
+    /* ERD */
+    .erd-wrap { background: #fff; border-radius: 20px; padding: 28px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); overflow-x: auto; }
+    .erd-wrap svg { width: 100%; min-width: 800px; }
+    #erd-svg-container svg.erDiagram .divider path { stroke-opacity: 0.4; }
+    #erd-svg-container svg.erDiagram .row-rect-odd path,
+    #erd-svg-container svg.erDiagram .row-rect-odd rect,
+    #erd-svg-container svg.erDiagram .row-rect-even path,
+    #erd-svg-container svg.erDiagram .row-rect-even rect { stroke: none !important; }
+    .erd-loading { color: #aaa; font-size: 13px; padding: 40px; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">E</div>
+      <span class="sb-brand-name">Edifica</span>
+    </div>
+    <div class="sb-user">
+      <div class="sb-avatar">CA</div>
+      <div class="sb-welcome">Bienvenido,</div>
+      <div class="sb-name">Carlos Aravena</div>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-item active" onclick="navigate('dashboard',this)"><span class="sb-icon">◉</span> Dashboard</div>
+      <div class="sb-item" onclick="navigate('residentes',this)"><span class="sb-icon">👥</span> Residentes</div>
+      <div class="sb-item" onclick="navigate('gastos',this)"><span class="sb-icon">💳</span> Gastos comunes</div>
+      <div class="sb-item" onclick="navigate('reservas',this)"><span class="sb-icon">📋</span> Reservas</div>
+      <div class="sb-item" onclick="navigate('visitas',this)"><span class="sb-icon">🚪</span> Control visitas <span class="sb-badge sb-badge-red">3</span></div>
+      <div class="sb-item" onclick="navigate('comunicados',this)"><span class="sb-icon">📢</span> Comunicados <span class="sb-badge">2</span></div>
+      <div class="sb-item" onclick="navigate('denuncias',this)"><span class="sb-icon">⚠️</span> Denuncias</div>
+      <div class="sb-item" onclick="navigate('modelo',this)"><span class="sb-icon">🗄️</span> Modelo de datos</div>
+    </div>
+    <div class="sb-footer">
+      <div class="sb-footer-item"><span class="sb-icon">⚙️</span> Configuración</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1 id="page-title">Dashboard</h1>
+        <p>Torre Alameda 1240 · Julio 2025</p>
+      </div>
+      <div class="search">
+        <span class="search-icon">⌕</span>
+        <span class="search-text">Buscar...</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="view active" id="view-dashboard">
+        <div class="cards-row">
+          <div class="stat-card card-green">
+            <div class="card-tag">🏢 Unidades <span class="card-badge">95%</span></div>
+            <div class="card-number">124</div>
+            <div class="card-sub">118 ocupadas · 6 disponibles</div>
+          </div>
+          <div class="stat-card card-yellow">
+            <div class="card-tag">💰 Cobro julio <span class="card-badge">75%</span></div>
+            <div class="card-number">$8.36M</div>
+            <div class="card-sub">17 pendientes · 12 morosos</div>
+          </div>
+          <div class="stat-card card-blue">
+            <div class="card-cta">Activa la app móvil para residentes</div>
+            <div style="font-size:11px;color:rgba(0,0,0,0.45);margin-bottom:4px">Pagos, visitas y comunicados desde el celular</div>
+            <button class="card-btn">Explorar →</button>
+          </div>
+        </div>
+        <div class="bottom-area">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Actividad reciente</span>
+              <span class="panel-link">Ver todo</span>
+            </div>
+            <div class="chart-subtitle" style="font-size:20px;margin-bottom:12px">7 <span style="font-size:13px;font-weight:500;color:#aaa">eventos hoy</span></div>
+            <div class="bar-chart">
+              <div class="bar-col"><div class="bar bar-light" style="height:40px"></div><div class="bar-label">L</div></div>
+              <div class="bar-col"><div class="bar bar-dark" style="height:65px"></div><div class="bar-label">M</div></div>
+              <div class="bar-col"><div class="bar bar-dark" style="height:80px"></div><div class="bar-label">X</div></div>
+              <div class="bar-col"><div class="bar bar-light" style="height:50px"></div><div class="bar-label">J</div></div>
+              <div class="bar-col"><div class="bar bar-dark" style="height:60px"></div><div class="bar-label">V</div></div>
+              <div class="bar-col"><div class="bar bar-light" style="height:30px"></div><div class="bar-label">S</div></div>
+              <div class="bar-col"><div class="bar bar-light" style="height:20px"></div><div class="bar-label">D</div></div>
+            </div>
+            <div>
+              <div class="act-item"><div class="act-dot dot-g"></div><div class="act-info"><div class="act-title">Reserva confirmada — SUM</div><div class="act-desc">Depto 801 · 20:00–23:00</div></div><div class="act-time">5m</div></div>
+              <div class="act-item"><div class="act-dot dot-b"></div><div class="act-info"><div class="act-title">Visita registrada</div><div class="act-desc">Juan Mora → Depto 304</div></div><div class="act-time">12m</div></div>
+              <div class="act-item"><div class="act-dot dot-r"></div><div class="act-info"><div class="act-title">Pago pendiente vencido</div><div class="act-desc">Depto 512 · $94.000</div></div><div class="act-time">1h</div></div>
+              <div class="act-item"><div class="act-dot dot-r"></div><div class="act-info"><div class="act-title">Nueva denuncia anónima</div><div class="act-desc">Ruidos molestos piso 7</div></div><div class="act-time">2h</div></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Cobro del mes</span>
+              <span class="panel-link" onclick="navigate('gastos', document.querySelectorAll('.sb-item')[2])">Detalle →</span>
+            </div>
+            <div class="chart-subtitle" style="font-size:20px;margin-bottom:4px">$8.36M</div>
+            <div style="font-size:11px;color:#bbb;margin-bottom:18px">$94.000 por unidad · julio 2025</div>
+            <div class="cobro-row"><div class="cobro-header"><span class="cobro-label">Pagados</span><span class="cobro-val">89 · $8.36M</span></div><div class="track"><div class="fill fill-green" style="width:75%"></div></div></div>
+            <div class="cobro-row"><div class="cobro-header"><span class="cobro-label">Pendientes</span><span class="cobro-val" style="color:#c9a030">17 · $1.59M</span></div><div class="track"><div class="fill fill-amber" style="width:14%"></div></div></div>
+            <div class="cobro-row"><div class="cobro-header"><span class="cobro-label">Morosos +30d</span><span class="cobro-val" style="color:#e07070">12 · $1.12M</span></div><div class="track"><div class="fill fill-red" style="width:10%"></div></div></div>
+            <button class="see-all-btn" onclick="navigate('gastos', document.querySelectorAll('.sb-item')[2])">Ver detalle completo →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESIDENTES -->
+      <div class="view" id="view-residentes">
+        <div class="page-header"><span class="page-h2">Residentes activos</span><button class="page-btn">+ Nuevo residente</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nombre</th><th>Depto</th><th>Rol</th><th>Teléfono</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td>María González</td><td>209</td><td>Propietario</td><td>+56 9 8811 2233</td><td><span class="pill pill-green">Activo</span></td></tr>
+              <tr><td>Juan Mora</td><td>304</td><td>Arrendatario</td><td>+56 9 7722 4411</td><td><span class="pill pill-green">Activo</span></td></tr>
+              <tr><td>Carlos Rivas</td><td>512</td><td>Propietario</td><td>+56 9 9933 1122</td><td><span class="pill pill-red">Moroso</span></td></tr>
+              <tr><td>Ana Pérez</td><td>801</td><td>Propietario</td><td>+56 9 6644 5533</td><td><span class="pill pill-green">Activo</span></td></tr>
+              <tr><td>Roberto Soto</td><td>715</td><td>Arrendatario</td><td>+56 9 5511 7766</td><td><span class="pill pill-yellow">Pendiente</span></td></tr>
+              <tr><td>Claudia Vega</td><td>102</td><td>Propietario</td><td>+56 9 4422 8899</td><td><span class="pill pill-green">Activo</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- GASTOS COMUNES -->
+      <div class="view" id="view-gastos">
+        <div class="page-header"><span class="page-h2">Gastos comunes · Julio 2025</span><button class="page-btn">+ Emitir cobro</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Unidad</th><th>Residente</th><th>Monto</th><th>Vencimiento</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td>Depto 209</td><td>María González</td><td>$94.000</td><td>05 jul</td><td><span class="pill pill-green">Pagado</span></td></tr>
+              <tr><td>Depto 304</td><td>Juan Mora</td><td>$94.000</td><td>05 jul</td><td><span class="pill pill-green">Pagado</span></td></tr>
+              <tr><td>Depto 512</td><td>Carlos Rivas</td><td>$94.000</td><td>05 jun</td><td><span class="pill pill-red">Moroso +30d</span></td></tr>
+              <tr><td>Depto 801</td><td>Ana Pérez</td><td>$94.000</td><td>05 jul</td><td><span class="pill pill-yellow">Pendiente</span></td></tr>
+              <tr><td>Depto 715</td><td>Roberto Soto</td><td>$94.000</td><td>05 jul</td><td><span class="pill pill-yellow">Pendiente</span></td></tr>
+              <tr><td>Depto 102</td><td>Claudia Vega</td><td>$94.000</td><td>05 jul</td><td><span class="pill pill-green">Pagado</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- RESERVAS -->
+      <div class="view" id="view-reservas">
+        <div class="page-header"><span class="page-h2">Reservas de hoy</span><button class="page-btn">+ Nueva reserva</button></div>
+        <div class="reserve-grid">
+          <div class="reserve-card"><div class="rc-space">🏊 Piscina</div><div class="rc-time">10:00 – 12:00</div><div class="rc-unit">Depto 304 · Juan Mora</div><div style="margin-top:10px"><span class="pill pill-green">Confirmada</span></div></div>
+          <div class="reserve-card"><div class="rc-space">🏊 Piscina</div><div class="rc-time">14:00 – 16:00</div><div class="rc-unit">Depto 209 · María González</div><div style="margin-top:10px"><span class="pill pill-green">Confirmada</span></div></div>
+          <div class="reserve-card"><div class="rc-space">🎉 SUM</div><div class="rc-time">20:00 – 23:00</div><div class="rc-unit">Depto 801 · Ana Pérez</div><div style="margin-top:10px"><span class="pill pill-green">Confirmada</span></div></div>
+          <div class="reserve-card"><div class="rc-space">🏋️ Gimnasio</div><div class="rc-time">07:00 – 08:00</div><div class="rc-unit">Depto 102 · Claudia Vega</div><div style="margin-top:10px"><span class="pill pill-green">Confirmada</span></div></div>
+          <div class="reserve-card"><div class="rc-space">🅿️ Estacionamiento visita</div><div class="rc-time">15:00 – 18:00</div><div class="rc-unit">Depto 715 · Roberto Soto</div><div style="margin-top:10px"><span class="pill pill-yellow">Pendiente aprobación</span></div></div>
+          <div class="reserve-card"><div class="rc-space">🎉 SUM</div><div class="rc-time">Mañana 19:00–22:00</div><div class="rc-unit">Depto 512 · Carlos Rivas</div><div style="margin-top:10px"><span class="pill pill-red">Bloqueada · moroso</span></div></div>
+        </div>
+      </div>
+
+      <!-- VISITAS -->
+      <div class="view" id="view-visitas">
+        <div class="page-header"><span class="page-h2">Control de visitas</span><button class="page-btn">+ Registrar visita</button></div>
+        <div class="visit-live">
+          <div class="vl-header"><div class="vl-dot"></div><div class="vl-title">3 visitas activas ahora</div></div>
+          <table style="width:100%">
+            <thead><tr><th>Visitante</th><th>Destino</th><th>Ingresó</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td>Pedro Jiménez</td><td>Depto 304</td><td>14:32</td><td><span class="pill pill-green">En edificio</span></td></tr>
+              <tr><td>Laura Muñoz</td><td>Depto 801</td><td>15:10</td><td><span class="pill pill-green">En edificio</span></td></tr>
+              <tr><td>Diego Torres</td><td>Depto 102</td><td>15:48</td><td><span class="pill pill-green">En edificio</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Visitante</th><th>RUT</th><th>Destino</th><th>Programada</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td>Martina Flores</td><td>18.234.567-8</td><td>Depto 209</td><td>Hoy 18:00</td><td><span class="pill pill-blue">Programada</span></td></tr>
+              <tr><td>Andrés Castro</td><td>16.789.012-3</td><td>Depto 715</td><td>Hoy 19:30</td><td><span class="pill pill-blue">Programada</span></td></tr>
+              <tr><td>Carmen López</td><td>14.321.098-7</td><td>Depto 512</td><td>Ayer 16:00</td><td><span class="pill pill-gray">Completada</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- COMUNICADOS -->
+      <div class="view" id="view-comunicados">
+        <div class="page-header"><span class="page-h2">Comunicados</span><button class="page-btn">+ Nuevo comunicado</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Título</th><th>Prioridad</th><th>Publicado</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td>Corte de agua programado — pisos 4 al 8</td><td><span class="pill pill-red">Alta</span></td><td>Hoy 08:00</td><td><span class="pill pill-green">Publicado</span></td></tr>
+              <tr><td>Asamblea de copropietarios — agosto</td><td><span class="pill pill-yellow">Media</span></td><td>Ayer 15:30</td><td><span class="pill pill-green">Publicado</span></td></tr>
+              <tr><td>Recordatorio pago gastos comunes julio</td><td><span class="pill pill-yellow">Media</span></td><td>01 jul</td><td><span class="pill pill-gray">Archivado</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DENUNCIAS -->
+      <div class="view" id="view-denuncias">
+        <div class="page-header"><span class="page-h2">Denuncias</span><button class="page-btn">+ Registrar denuncia</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Categoría</th><th>Descripción</th><th>Piso</th><th>Anónima</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td>Ruidos</td><td>Ruidos molestos pasada la medianoche</td><td>7</td><td><span class="pill pill-gray">Sí</span></td><td><span class="pill pill-yellow">En revisión</span></td></tr>
+              <tr><td>Mascotas</td><td>Perro sin correa en área común</td><td>3</td><td><span class="pill pill-blue">No</span></td><td><span class="pill pill-green">Resuelta</span></td></tr>
+              <tr><td>Daños</td><td>Daño en puerta de estacionamiento B2</td><td>-1</td><td><span class="pill pill-blue">No</span></td><td><span class="pill pill-yellow">En revisión</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- MODELO DE DATOS -->
+      <div class="view" id="view-modelo">
+        <div class="page-header">
+          <span class="page-h2">Modelo de datos</span>
+          <span style="font-size:12px;color:#aaa">14 entidades · Supabase / PostgreSQL</span>
+        </div>
+        <div class="erd-wrap">
+          <div id="erd-svg-container"><p class="erd-loading">Cargando diagrama ERD...</p></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const titles = { dashboard:'Dashboard', residentes:'Residentes', gastos:'Gastos comunes', reservas:'Reservas', visitas:'Control de visitas', comunicados:'Comunicados', denuncias:'Denuncias', modelo:'Modelo de datos' };
+
+    function navigate(view, el) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-' + view).classList.add('active');
+      document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+      if (el) el.classList.add('active');
+      document.getElementById('page-title').textContent = titles[view] || view;
+      if (view === 'modelo') loadERD();
+    }
+
+    let erdLoaded = false;
+    async function loadERD() {
+      if (erdLoaded) return;
+      erdLoaded = true;
+      try {
+        const { default: mermaid } = await import('https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs');
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: 'base',
+          fontFamily: 'Plus Jakarta Sans, sans-serif',
+          themeVariables: {
+            darkMode: false,
+            fontSize: '12px',
+            fontFamily: 'Plus Jakarta Sans, sans-serif',
+            lineColor: '#73726c',
+            textColor: '#3d3d3a',
+            primaryColor: '#f0ede8',
+            primaryBorderColor: '#1e1e1e',
+            primaryTextColor: '#1a1a1a'
+          }
+        });
+        const diagram = `erDiagram
+  ORGANIZATIONS ||--o{ BUILDINGS : "gestiona"
+  BUILDINGS ||--o{ UNITS : "contiene"
+  BUILDINGS ||--o{ PROFILES : "pertenece"
+  BUILDINGS ||--o{ COMMON_SPACES : "tiene"
+  BUILDINGS ||--o{ ANNOUNCEMENTS : "publica"
+  BUILDINGS ||--o{ COMPLAINTS : "registra"
+  BUILDINGS ||--o{ REGULATIONS : "define"
+  UNITS ||--o{ PROFILES : "ocupa"
+  UNITS ||--o{ VISITS : "recibe"
+  UNITS ||--o{ FEES : "debe"
+  PROFILES ||--o{ RESERVATIONS : "hace"
+  PROFILES ||--o{ VISITS : "autoriza"
+  COMMON_SPACES ||--o{ RESERVATIONS : "es reservado"
+  FEES ||--o{ PAYMENTS : "paga"
+  ORGANIZATIONS { uuid id PK string name string rut string plan_tier }
+  BUILDINGS { uuid id PK uuid org_id FK string name string address int total_units }
+  UNITS { uuid id PK uuid building_id FK string number int floor string status }
+  PROFILES { uuid id PK uuid user_id FK uuid unit_id FK string role string full_name }
+  COMMON_SPACES { uuid id PK uuid building_id FK string name int capacity boolean requires_approval }
+  RESERVATIONS { uuid id PK uuid space_id FK uuid profile_id FK date date string status }
+  ANNOUNCEMENTS { uuid id PK uuid building_id FK string title string priority }
+  VISITS { uuid id PK uuid unit_id FK string visitor_name string qr_token string status }
+  FEES { uuid id PK uuid unit_id FK decimal amount date due_date string status }
+  PAYMENTS { uuid id PK uuid fee_id FK decimal amount string method timestamp paid_at }
+  COMPLAINTS { uuid id PK uuid building_id FK string category boolean is_anonymous string status }
+  REGULATIONS { uuid id PK uuid building_id FK string title string version boolean is_active }`;
+        const { svg } = await mermaid.render('erd-main', diagram);
+        document.getElementById('erd-svg-container').innerHTML = svg;
+      } catch(e) {
+        document.getElementById('erd-svg-container').innerHTML = '<p style="color:#e07070;font-size:13px;padding:20px">Error al cargar el diagrama. Verifica tu conexión a internet.</p>';
+      }
+    }
+  </script>
+</body>
+</html>
